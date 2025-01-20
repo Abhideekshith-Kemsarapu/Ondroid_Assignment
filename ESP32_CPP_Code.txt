@@ -1,0 +1,28 @@
+const int LED_Pins[] = 
+{
+27, //Pin_1
+25, //Pin_2
+33, //Pin_3
+21, //Pin_4
+26, //Pin_5
+23, //Pin_6
+22, //Pin_7
+12, //Pin_8
+19, //Pin_9
+13  //Pin_10
+}; 
+const int Total_LEDS = 10;
+
+void setup() {
+  for (int i = 0; i < Total_LEDS; i++) {
+    pinMode(LED_Pins[i], OUTPUT); // Set each pin as output
+  }
+  randomSeed(analogRead(0)); // Initialize random seed
+}
+
+void loop() {
+  for (int i = 0; i < Total_LEDS; i++) {
+    digitalWrite(LED_Pins[i], random(0, 2)); // Randomly turn LED on/off
+  }
+  delay(1000); 
+}
