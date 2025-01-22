@@ -1,0 +1,64 @@
+import cv2
+import numpy as np
+import time
+
+class Result:
+    """Represents the result of a test."""
+    def __init__(self, success, description):
+        self.success = success
+        self.description = description
+
+def count_leds(image):
+    """
+    Counts the number of illuminated LEDs in the given image using OpenCV.
+    Args:
+        image (numpy.ndarray): Input RGB image from the camera.
+    Returns:
+        int: Number of LEDs detected as turned on.
+    """
+    # Convert image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Apply threshold to identify bright areas (LEDs)
+    _, thresholded = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    
+    # Find contours of bright spots
+    contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Filter contours based on size to avoid noise
+    led_count = sum(1 for cnt in contours if cv2.contourArea(cnt) > 50)
+    
+    return led_count
+
+def task_test(robot, image, dataTest):
+    """
+    Verifies LED count from the image and updates test status.
+    
+    Args:
+        robot: The robot object containing its position and orientation data.
+        image (numpy.ndarray): The image frame from the hardware camera.
+        dataTest: The test object containing test parameters.
+
+    Returns:
+        tuple: Updated dataTest, user message text, and Result(success, description).
+    """
+    # Ensure end_time is set for the test
+    if not hasattr(dataTest, 'end_time') or dataTest.end_time is None:
+        dataTest.end_time = time.time() + 10  # Set a default duration of 10 seconds
+    
+    # Count LEDs in the image
+    try:
+        leds_on = count_leds(image)
+    except Exception as e:
+        return dataTest, "Error during LED count.", Result(False, f"Exception: {e}")
+
+    # Prepare result
+    success = leds_on > 0
+    description = f"Detected {leds_on} LEDs turned on." if success else "No LEDs detected."
+    text = f"LEDs turned on: {leds_on}"
+    
+    # Debugging logs (optional)
+    print(f"[DEBUG] LED Count: {leds_on}")
+    print(f"[DEBUG] Success: {success}, Description: {description}")
+    
+    return dataTest, text, Result(success, description)
